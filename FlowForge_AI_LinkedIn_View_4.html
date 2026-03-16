@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowForge AI — Architecture & Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #06080f;
+  --bg2: #0b1018;
+  --bg3: #101520;
+  --card: #121824;
+  --card2: #171f2e;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --cyan: #22d3ee;
+  --cyan2: #06b6d4;
+  --n8n: #ea580c;
+  --n8n2: #f97316;
+  --gold: #fbbf24;
+  --green: #34d399;
+  --red: #f87171;
+  --purple: #a78bfa;
+  --blue: #60a5fa;
+  --text: #e2e8f4;
+  --text2: #7b8fa8;
+  --text3: #3a4a5e;
+  --ff: 'Syne', sans-serif;
+  --body: 'Outfit', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13px;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 48px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  position: relative; z-index: 50;
+}
+.logo { font-family: var(--ff); font-size: 17px; font-weight: 800; color: var(--cyan); letter-spacing: -0.5px; }
+.logo em { color: var(--n8n); font-style: normal; }
+.tab-row { display: flex; gap: 2px; }
+.tab {
+  padding: 5px 16px; border-radius: 6px;
+  font-family: var(--ff); font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; background: transparent;
+  color: var(--text2); letter-spacing: 0.3px;
+  transition: all 0.2s;
+}
+.tab.active { background: var(--card2); color: var(--text); }
+.tab:hover:not(.active) { color: var(--text); }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.project-chip {
+  font-family: var(--mono); font-size: 10px;
+  padding: 3px 10px; border-radius: 20px;
+  background: rgba(234,88,12,0.12); border: 1px solid rgba(234,88,12,0.25);
+  color: var(--n8n2);
+}
+.live { display:flex; align-items:center; gap:5px; font-size:11px; color: var(--text2); }
+.live-dot { width:7px; height:7px; border-radius:50%; background: var(--green); box-shadow: 0 0 7px var(--green); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── MAIN SPLIT ── */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+}
+
+/* ── LEFT: ARCHITECTURE ── */
+.arch-panel {
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+  background: #1c2030;
+}
+.panel-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  background: #242838;
+}
+.panel-title { font-family: var(--ff); font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+.panel-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.arch-scroll { flex:1; overflow-y:auto; padding: 14px 16px; background: #1c2030; }
+.arch-scroll::-webkit-scrollbar { width:4px; }
+.arch-scroll::-webkit-scrollbar-track { background: transparent; }
+.arch-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius:2px; }
+
+/* ── N8N HUB ── */
+.n8n-hub {
+  background: linear-gradient(135deg, rgba(234,88,12,0.12), rgba(234,88,12,0.06));
+  border: 1.5px solid rgba(234,88,12,0.35);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.n8n-hub::before {
+  content:'';
+  position:absolute; top:-20px; right:-20px;
+  width:80px; height:80px; border-radius:50%;
+  background: radial-gradient(circle, rgba(234,88,12,0.15) 0%, transparent 70%);
+}
+.n8n-hub:hover { border-color: rgba(234,88,12,0.6); transform: translateY(-1px); }
+.n8n-hub.highlighted { border-color: var(--n8n); box-shadow: 0 0 20px rgba(234,88,12,0.25); }
+.n8n-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.n8n-badge {
+  background: var(--n8n); color: white;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 3px 10px; border-radius: 4px; flex-shrink:0;
+}
+.n8n-title { font-family: var(--ff); font-size: 14px; font-weight: 700; color: var(--text); }
+.n8n-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
+.n8n-triggers {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+}
+.trigger-tag {
+  font-size: 10px; font-family: var(--mono);
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(234,88,12,0.12); border: 1px solid rgba(234,88,12,0.2);
+  color: var(--n8n2);
+}
+
+/* ── FLOW LAYERS ── */
+.flow-arrow {
+  display: flex; align-items: center; justify-content: center;
+  height: 28px; color: var(--cyan); font-size: 22px; font-weight: 900;
+  position: relative; letter-spacing: -2px;
+  text-shadow: 0 0 8px rgba(34,211,238,0.4);
+}
+.flow-arrow::before, .flow-arrow::after {
+  content:''; position:absolute;
+  left:50%; top:0; bottom:0;
+  width:2px; background: rgba(34,211,238,0.25);
+  transform: translateX(-50%);
+}
+.flow-arrow::before { bottom:50%; }
+.flow-arrow::after { top:50%; }
+
+.layer-block {
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  cursor: pointer;
+  background: #1a1f2b;
+}
+.layer-block:hover { border-color: rgba(255,255,255,0.18); }
+.layer-block.highlighted {
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px rgba(34,211,238,0.15);
+}
+.layer-block.highlighted .layer-header { background: rgba(34,211,238,0.07); }
+.layer-header {
+  padding: 0;
+  background: #1e2535;
+  display: flex; flex-direction: column; align-items: center;
+  transition: background 0.25s;
+  overflow: hidden;
+}
+.layer-icon-wrap {
+  width: 100%; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+.layer-icon-wrap svg { width: 100%; height: 100%; }
+.layer-header-text {
+  width: 100%; padding: 8px 12px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-align: center;
+}
+.layer-num {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text3); flex-shrink:0;
+}
+.layer-name { font-family: var(--ff); font-size: 12px; font-weight: 700; flex:1; text-align:center; }
+.layer-tag {
+  font-size: 10px; font-family: var(--mono);
+  padding: 2px 7px; border-radius: 4px; flex-shrink:0;
+}
+.layer-agents {
+  padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 5px;
+  background: #14192a;
+}
+.agent-row {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 8px; border-radius: 7px;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+  text-align: center;
+}
+.agent-row:hover { background: #1e2535; }
+.agent-row.active-agent {
+  background: rgba(34,211,238,0.07);
+  border-color: rgba(34,211,238,0.2);
+}
+.agent-dot { display: none; }
+.agent-label { font-size: 11px; color: var(--text); width: 100%; text-align: center; }
+.agent-output { font-size: 10px; color: var(--text3); font-family: var(--mono); text-align: center; }
+.dash-link {
+  font-size: 10px; font-family: var(--mono);
+  color: var(--cyan); opacity:0;
+  transition: opacity 0.2s;
+  text-align: center;
+}
+.layer-block:hover .dash-link { opacity:1; }
+.layer-block.highlighted .dash-link { opacity:1; }
+
+/* ── N8N CONNECTION LINES ── */
+.n8n-connections {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 5px; margin-bottom: 10px;
+}
+.conn-line {
+  background: #1a1f2b;
+  border: 1px solid rgba(234,88,12,0.2);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 10px; font-family: var(--mono);
+  color: var(--text2);
+  display:flex; align-items:center; gap:5px;
+}
+.conn-dot { width:5px; height:5px; border-radius:50%; background: var(--n8n2); flex-shrink:0; }
+
+/* ── RIGHT: DASHBOARD ── */
+.dash-panel {
+  display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg);
+}
+.dash-scroll { flex:1; overflow-y:auto; padding: 12px 14px; }
+.dash-scroll::-webkit-scrollbar { width:4px; }
+.dash-scroll::-webkit-scrollbar-track { background: transparent; }
+.dash-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius:2px; }
+
+/* ── DASHBOARD WIDGETS ── */
+.widget {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.widget::after {
+  content: attr(data-label);
+  position: absolute; top:8px; right:8px;
+  font-size: 9px; font-family: var(--mono);
+  color: var(--cyan); opacity:0;
+  background: rgba(34,211,238,0.08);
+  border: 1px solid rgba(34,211,238,0.2);
+  padding: 2px 7px; border-radius:10px;
+  transition: opacity 0.25s;
+}
+.widget.highlighted {
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(34,211,238,0.15);
+  transform: scale(1.01);
+}
+.widget.highlighted::after { opacity:1; }
+.widget.n8n-highlight {
+  border-color: var(--n8n);
+  box-shadow: 0 0 20px rgba(234,88,12,0.2);
+}
+.widget-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.widget-title { font-family: var(--ff); font-size: 12px; font-weight: 700; }
+.wbadge {
+  font-size: 9px; font-family: var(--mono);
+  padding: 2px 7px; border-radius:10px;
+}
+.bg-green { background: rgba(52,211,153,0.1); color: var(--green); }
+.bg-gold { background: rgba(251,191,36,0.1); color: var(--gold); }
+.bg-red { background: rgba(248,113,113,0.1); color: var(--red); }
+.bg-cyan { background: rgba(34,211,238,0.1); color: var(--cyan); }
+.bg-orange { background: rgba(234,88,12,0.1); color: var(--n8n2); }
+.bg-purple { background: rgba(167,139,250,0.1); color: var(--purple); }
+
+/* ── STAT MINI ROW ── */
+.stat-mini-row { display:grid; grid-template-columns: repeat(4,1fr); gap:8px; margin-bottom:10px; }
+.stat-mini {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  cursor: pointer;
+}
+.stat-mini.highlighted { border-color: var(--cyan); box-shadow: 0 0 12px rgba(34,211,238,0.15); }
+.stat-mini-label { font-size: 9px; color: var(--text2); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; }
+.stat-mini-val { font-family: var(--ff); font-size: 20px; font-weight: 800; line-height:1; }
+.stat-mini-delta { font-size: 9px; color: var(--text2); margin-top:3px; }
+
+/* ── TEAM ROWS ── */
+.team-mini { display:flex; flex-direction:column; gap:5px; }
+.tmember {
+  display:flex; align-items:center; gap:8px;
+  padding: 6px 8px; border-radius:7px;
+  background: var(--bg3);
+  transition: background 0.15s;
+}
+.tav { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+.tinfo { flex:1; min-width:0; }
+.tname { font-size:11px; font-weight:600; }
+.ttask { font-size:10px; color: var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tbar-wrap { width:100%; height:3px; background: var(--bg2); border-radius:2px; margin-top:3px; }
+.tbar { height:100%; border-radius:2px; }
+.tpts { font-family: var(--mono); font-size:10px; color: var(--text2); flex-shrink:0; }
+
+/* ── PR LIST MINI ── */
+.pr-mini { display:flex; flex-direction:column; gap:4px; }
+.pr-item {
+  display:flex; align-items:center; gap:7px;
+  padding: 5px 7px; border-radius:6px; background: var(--bg3);
+}
+.pr-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.pr-text { flex:1; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: var(--text2); }
+.pr-id { font-family: var(--mono); font-size:9px; color: var(--text3); flex-shrink:0; }
+.pr-who { font-size:9px; color: var(--text3); flex-shrink:0; }
+
+/* ── DEFECT HEAT ── */
+.heat-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-top:6px; }
+.heat-cell { aspect-ratio:1; border-radius:3px; cursor:pointer; transition: transform 0.15s; }
+.heat-cell:hover { transform: scale(1.4); z-index:5; position:relative; }
+.heat-days { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:3px; }
+.heat-day { font-size:9px; color: var(--text3); text-align:center; font-family: var(--mono); }
+
+/* ── VOICE WIDGET ── */
+.voice-widget {
+  background: linear-gradient(135deg, var(--card) 0%, var(--bg3) 100%);
+  border: 1px solid rgba(34,211,238,0.15);
+  border-radius: 11px; padding: 12px 14px;
+  margin-bottom: 10px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.voice-widget.highlighted { border-color: var(--cyan); box-shadow: 0 0 20px rgba(34,211,238,0.15); }
+.voice-widget.n8n-highlight { border-color: var(--n8n); box-shadow: 0 0 20px rgba(234,88,12,0.2); }
+.voice-script-mini {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px; padding: 9px 11px;
+  font-size: 11px; line-height: 1.65;
+  color: var(--text2); margin: 9px 0;
+}
+.hl { color: var(--text); font-weight:600; }
+.cn { color: var(--cyan); }
+.gn { color: var(--green); }
+.rd { color: var(--red); }
+.gd { color: var(--gold); }
+.wave-row { display:flex; align-items:center; gap:10px; }
+.play-b {
+  width:34px; height:34px; border-radius:50%;
+  background: var(--cyan); border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition: transform 0.15s;
+}
+.play-b:hover { transform: scale(1.08); }
+.play-b svg { width:13px; height:13px; fill: var(--bg); margin-left:2px; }
+.wf-mini { flex:1; height:28px; display:flex; align-items:center; gap:1.5px; overflow:hidden; }
+.wbar { flex-shrink:0; width:2.5px; border-radius:2px; background: rgba(34,211,238,0.25); }
+.wbar.wp { background: rgba(34,211,238,0.55); }
+.wbar.wa { background: var(--cyan); }
+.vtime { font-family: var(--mono); font-size:10px; color: var(--text2); flex-shrink:0; }
+.speak-ind { display:inline-flex; align-items:center; gap:2px; margin-right:5px; }
+.sb { width:2.5px; border-radius:1px; background: var(--cyan); animation: spk 0.8s ease-in-out infinite; }
+.sb:nth-child(1){height:5px;animation-delay:0s}
+.sb:nth-child(2){height:10px;animation-delay:.15s}
+.sb:nth-child(3){height:7px;animation-delay:.3s}
+.sb:nth-child(4){height:12px;animation-delay:.1s}
+.sb:nth-child(5){height:5px;animation-delay:.25s}
+@keyframes spk { 0%,100%{transform:scaleY(.35);opacity:.4} 50%{transform:scaleY(1);opacity:1} }
+
+/* ── ESCALATION MINI ── */
+.esc-item {
+  background: var(--bg3);
+  border: 1px solid rgba(248,113,113,0.15);
+  border-radius: 8px; padding: 9px 11px; margin-top:8px;
+}
+.esc-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.esc-title { font-size:11px; font-weight:600; }
+.status-p { font-size:9px; font-family: var(--mono); padding:2px 7px; border-radius:10px; }
+.s-app { background: rgba(52,211,153,0.1); color: var(--green); }
+.esc-body { font-size:10px; color: var(--text2); line-height:1.55; margin-bottom:6px; }
+.chain { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.chain-node { font-size:9px; display:flex; align-items:center; gap:3px; }
+.chain-dot { width:5px; height:5px; border-radius:50%; }
+.chain-arr { color: var(--text3); font-size:9px; }
+
+/* ── MODAL ── */
+.modal-bg {
+  position:fixed; inset:0;
+  background: rgba(6,8,15,0.8);
+  z-index:999; display:none;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(6px);
+}
+.modal-bg.open { display:flex; }
+.modal-box {
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  border-radius: 16px; padding: 24px;
+  width: 420px; max-width:90vw;
+  animation: fadeUp 0.2s ease;
+}
+@keyframes fadeUp { from{transform:translateY(14px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.modal-h { font-family: var(--ff); font-size:17px; font-weight:700; }
+.modal-ctx {
+  background: var(--bg); border:1px solid var(--border);
+  border-radius:7px; padding:8px 11px;
+  font-size:11px; color: var(--text2); font-family: var(--mono);
+  margin-bottom:12px;
+}
+.modal-ctx span { color: var(--cyan); }
+.modal-lbl { font-size:11px; color: var(--text2); margin-bottom:5px; }
+.modal-ta {
+  width:100%; height:80px; background: var(--bg);
+  border:1px solid var(--border2); border-radius:7px;
+  padding:9px 11px; color: var(--text); font-family: var(--body);
+  font-size:12px; resize:none; outline:none; margin-bottom:12px;
+  transition: border-color 0.2s;
+}
+.modal-ta:focus { border-color: rgba(34,211,238,0.4); }
+.modal-route { display:flex; align-items:center; gap:7px; font-size:11px; color: var(--text2); margin-bottom:16px; }
+.route-chip {
+  font-size:10px; font-family: var(--mono);
+  padding:2px 9px; border-radius:10px;
+  background: rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.2); color: var(--cyan);
+}
+.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+.btn-c { padding:7px 16px; border-radius:7px; background:transparent; border:1px solid var(--border2); color:var(--text2); cursor:pointer; font-family:var(--body); font-size:12px; transition:all .15s; }
+.btn-c:hover { border-color: var(--text2); color: var(--text); }
+.btn-s { padding:7px 18px; border-radius:7px; background: var(--cyan); border:none; color: var(--bg); cursor:pointer; font-family:var(--body); font-size:12px; font-weight:600; transition:all .15s; }
+.btn-s:hover { background: var(--cyan2); }
+.x-btn { background:none; border:none; color: var(--text2); cursor:pointer; font-size:18px; line-height:1; }
+.x-btn:hover { color: var(--text); }
+.sent-c { text-align:center; padding:8px 0; }
+.sent-icon { font-size:32px; margin-bottom:8px; }
+.sent-title { font-family: var(--ff); font-size:17px; font-weight:700; margin-bottom:5px; }
+.sent-sub { font-size:12px; color: var(--text2); }
+
+/* ── TOOLTIP ── */
+.arch-tooltip {
+  position: fixed;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 11px; color: var(--text2);
+  pointer-events:none; z-index:200;
+  opacity:0; transition: opacity 0.15s;
+  max-width: 220px; line-height:1.5;
+}
+.arch-tooltip.show { opacity:1; }
+
+/* ── PROJECT PORTFOLIO BAR ── */
+.portfolio-bar {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 11px 13px;
+  margin-bottom: 10px;
+}
+.portfolio-bar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 9px;
+}
+.portfolio-bar-title {
+  font-family: var(--ff); font-size: 11px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.portfolio-count {
+  font-size: 9px; font-family: var(--mono);
+  padding: 2px 8px; border-radius: 10px;
+  background: rgba(34,211,238,0.1); color: var(--cyan);
+  border: 1px solid rgba(34,211,238,0.2);
+}
+.project-cards-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
+}
+.proj-card {
+  border-radius: 8px; padding: 9px 10px;
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.proj-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: var(--pc, var(--cyan));
+}
+.proj-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.proj-card.active {
+  border-color: var(--pc, var(--cyan));
+  box-shadow: 0 0 12px rgba(var(--pc-rgb, 34,211,238), 0.15);
+}
+.proj-card.active .proj-name { color: var(--pc, var(--cyan)); }
+.proj-name {
+  font-family: var(--ff); font-size: 10px; font-weight: 700;
+  color: var(--text); margin-bottom: 4px; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.proj-meta { font-size: 9px; color: var(--text2); font-family: var(--mono); margin-bottom: 5px; }
+.proj-stats { display: flex; gap: 6px; }
+.proj-stat {
+  font-size: 9px; font-family: var(--mono);
+  padding: 1px 5px; border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+}
+.proj-status-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  display: inline-block; margin-right: 3px; vertical-align: middle;
+}
+.zoomed-label {
+  position: absolute; top: 6px; right: 6px;
+  font-size: 8px; font-family: var(--mono);
+  color: var(--cyan); background: rgba(34,211,238,0.1);
+  border: 1px solid rgba(34,211,238,0.2);
+  padding: 1px 5px; border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">Flow<em>Forge</em> AI</div>
+  <div class="tab-row">
+    <button class="tab active" onclick="setView('split')">⚡ Architecture + Dashboard</button>
+    <button class="tab" onclick="setView('arch')">🔧 Architecture Only</button>
+    <button class="tab" onclick="setView('dash')">📊 Dashboard Only</button>
+  </div>
+  <div class="topbar-right">
+    <div class="project-chip">NovaMart Platform Migration</div>
+    <a href="https://github.com/toyoaladesuru/flowforge-ai" target="_blank" style="font-family:var(--mono);font-size:10px;color:var(--text2);text-decoration:none;padding:3px 10px;border-radius:20px;border:1px solid var(--border2);transition:color 0.15s;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--text2)'">github.com/toyoaladesuru</a>
+    <div class="live"><div class="live-dot"></div> Sprint 14 · Live</div>
+  </div>
+</div>
+
+<!-- SPLIT VIEW -->
+<div class="split" id="mainSplit">
+
+  <!-- ══ LEFT: ARCHITECTURE ══ -->
+  <div class="arch-panel" id="archPanel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">System Architecture</div>
+        <div class="panel-sub">Click any agent or layer → highlights matching dashboard widget</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <div style="font-size:10px; font-family:var(--mono); color:var(--n8n2)">n8n orchestrated</div>
+        <div style="font-size:9px; font-family:var(--mono); color:var(--text3)">Viewing: <span id="arch-project-label" style="color:var(--cyan)">NovaMart Platform Migration</span></div>
+      </div>
+    </div>
+    <div class="arch-scroll">
+
+      <!-- INPUT TRIGGERS -->
+      <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+        <div class="conn-line"><div class="conn-dot"></div>GitHub Webhook</div>
+        <div class="conn-line"><div class="conn-dot"></div>Jira Event</div>
+        <div class="conn-line"><div class="conn-dot"></div>CI/CD Pipeline</div>
+        <div class="conn-line"><div class="conn-dot"></div>PRD Upload</div>
+        <div class="conn-line"><div class="conn-dot"></div>Friday 5PM Cron</div>
+        <div class="conn-line"><div class="conn-dot"></div>Exec Click Event</div>
+      </div>
+
+      <!-- N8N HUB -->
+      <div class="n8n-hub" id="n8nHub" onclick="highlightN8n()" title="Click to highlight n8n-driven widgets">
+        <div class="n8n-row">
+          <div class="n8n-badge">n8n</div>
+          <div class="n8n-title">Central Orchestrator</div>
+        </div>
+        <div class="n8n-desc">n8n receives all inbound webhook events (GitHub PRs, Jira status changes, CI/CD results, scheduled cron) and routes them to the correct Claude agent via HTTP nodes. Acts as the event bus and workflow state manager across all 5 layers.</div>
+        <div class="n8n-triggers">
+          <div class="trigger-tag">Webhook node</div>
+          <div class="trigger-tag">HTTP Request node</div>
+          <div class="trigger-tag">Cron Trigger</div>
+          <div class="trigger-tag">IF / Switch nodes</div>
+          <div class="trigger-tag">Slack node</div>
+          <div class="trigger-tag">Jira node</div>
+          <div class="trigger-tag">GitHub node</div>
+          <div class="trigger-tag">Set / Merge nodes</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <!-- LAYER 01 -->
+      <div class="layer-block" id="layer01" onclick="activateLayer('layer01', ['velocity','stories','w-frd','w-erd'])" data-widgets="velocity,stories,w-frd,w-erd">
+        <div class="layer-header">
+          <div class="layer-icon-wrap" style="background:rgba(34,211,238,0.06);">
+            <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg">
+              <rect x="18" y="14" width="52" height="44" rx="5" fill="none" stroke="#22d3ee" stroke-width="1.5"/>
+              <line x1="26" y1="26" x2="62" y2="26" stroke="#22d3ee" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="26" y1="33" x2="62" y2="33" stroke="#22d3ee" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="26" y1="40" x2="50" y2="40" stroke="#22d3ee" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="26" y1="47" x2="55" y2="47" stroke="#22d3ee" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="26" y1="54" x2="45" y2="54" stroke="#22d3ee" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+              <line x1="80" y1="36" x2="98" y2="36" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" marker-end="url(#arr01)"/>
+              <defs><marker id="arr01" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+              <rect x="102" y="10" width="80" height="52" rx="5" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" stroke-width="1.5"/>
+              <text x="142" y="30" text-anchor="middle" fill="#22d3ee" font-size="8" font-family="monospace">FRD</text>
+              <line x1="112" y1="36" x2="172" y2="36" stroke="#22d3ee" stroke-width="0.8" opacity="0.4"/>
+              <text x="142" y="48" text-anchor="middle" fill="#22d3ee" font-size="7" font-family="monospace" opacity="0.7">FR-001</text>
+              <text x="142" y="57" text-anchor="middle" fill="#22d3ee" font-size="7" font-family="monospace" opacity="0.7">FR-002</text>
+              <circle cx="142" cy="16" r="10" fill="rgba(34,211,238,0.12)" stroke="#22d3ee" stroke-width="1"/>
+              <text x="142" y="20" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="bold" font-family="monospace">ERD</text>
+            </svg>
+          </div>
+          <div class="layer-header-text">
+            <div class="layer-num">01</div>
+            <div class="layer-name" style="color:var(--cyan)">Requirements Ingestion & Generation</div>
+            <div class="layer-tag bg-cyan">PRD → FRD → ERD</div>
+          </div>
+        </div>
+        <div class="layer-agents">
+          <div class="agent-row" id="ag-prd" onclick="activateAgent(event,'ag-prd',['w-frd'])">
+            <div class="agent-dot" style="background:var(--cyan)"></div>
+            <div class="agent-label">PRD Ingestion Agent</div>
+            <div class="agent-output">→ JSON schema</div>
+            <div class="dash-link">FRD widget ↗</div>
+          </div>
+          <div class="agent-row" id="ag-frd" onclick="activateAgent(event,'ag-frd',['w-frd'])">
+            <div class="agent-dot" style="background:var(--cyan)"></div>
+            <div class="agent-label">FRD Generation Agent</div>
+            <div class="agent-output">→ FRD doc + ACs</div>
+            <div class="dash-link">FRD widget ↗</div>
+          </div>
+          <div class="agent-row" id="ag-erd" onclick="activateAgent(event,'ag-erd',['w-erd'])">
+            <div class="agent-dot" style="background:var(--cyan)"></div>
+            <div class="agent-label">ERD Synthesis Agent</div>
+            <div class="agent-output">→ Mermaid ERD</div>
+            <div class="dash-link">ERD widget ↗</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <!-- LAYER 02 -->
+      <div class="layer-block" id="layer02" onclick="activateLayer('layer02', ['velocity','stories','w-burndown'])">
+        <div class="layer-header">
+          <div class="layer-icon-wrap" style="background:rgba(251,191,36,0.06);">
+            <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg">
+              <rect x="14" y="12" width="56" height="48" rx="5" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+              <rect x="14" y="12" width="56" height="14" rx="5" fill="rgba(251,191,36,0.15)" stroke="none"/>
+              <rect x="14" y="22" width="56" height="4" rx="0" fill="rgba(251,191,36,0.15)" stroke="none"/>
+              <text x="42" y="22" text-anchor="middle" fill="#fbbf24" font-size="7.5" font-family="monospace">Sprint 14</text>
+              <line x1="22" y1="34" x2="62" y2="34" stroke="#fbbf24" stroke-width="0.8" opacity="0.3"/>
+              <rect x="22" y="37" width="32" height="5" rx="2" fill="rgba(251,191,36,0.3)"/>
+              <rect x="22" y="45" width="24" height="5" rx="2" fill="rgba(251,191,36,0.2)"/>
+              <rect x="22" y="53" width="38" height="5" rx="2" fill="rgba(251,191,36,0.2)"/>
+              <text x="58" y="41" text-anchor="middle" fill="#fbbf24" font-size="6" font-family="monospace">5pt</text>
+              <text x="58" y="49" text-anchor="middle" fill="#fbbf24" font-size="6" font-family="monospace">3pt</text>
+              <text x="58" y="57" text-anchor="middle" fill="#fbbf24" font-size="6" font-family="monospace">8pt</text>
+              <line x1="80" y1="36" x2="98" y2="36" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" marker-end="url(#arr02)"/>
+              <defs><marker id="arr02" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+              <rect x="102" y="14" width="80" height="44" rx="5" fill="rgba(251,191,36,0.06)" stroke="#fbbf24" stroke-width="1.5"/>
+              <circle cx="115" cy="27" r="5" fill="none" stroke="#fbbf24" stroke-width="1"/>
+              <text x="115" y="30" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="monospace">J</text>
+              <text x="132" y="25" text-anchor="start" fill="#fbbf24" font-size="7" font-family="monospace">FF-141</text>
+              <text x="132" y="33" text-anchor="start" fill="#fbbf24" font-size="6.5" font-family="monospace" opacity="0.7">In Progress</text>
+              <line x1="108" y1="40" x2="174" y2="40" stroke="#fbbf24" stroke-width="0.5" opacity="0.3"/>
+              <circle cx="115" cy="49" r="5" fill="none" stroke="#fbbf24" stroke-width="1"/>
+              <text x="115" y="52" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="monospace">J</text>
+              <text x="132" y="47" text-anchor="start" fill="#fbbf24" font-size="7" font-family="monospace">FF-142</text>
+              <text x="132" y="55" text-anchor="start" fill="#fbbf24" font-size="6.5" font-family="monospace" opacity="0.7">To Do</text>
+            </svg>
+          </div>
+          <div class="layer-header-text">
+            <div class="layer-num">02</div>
+            <div class="layer-name" style="color:var(--gold)">Sprint Planning & Jira Orchestration</div>
+            <div class="layer-tag bg-gold">FRD → Backlog → Jira</div>
+          </div>
+        </div>
+        <div class="layer-agents">
+          <div class="agent-row" id="ag-sprint" onclick="activateAgent(event,'ag-sprint',['velocity','w-burndown'])">
+            <div class="agent-dot" style="background:var(--gold)"></div>
+            <div class="agent-label">Sprint Orchestrator Agent</div>
+            <div class="agent-output">→ Fibonacci backlog</div>
+            <div class="dash-link">Burndown ↗</div>
+          </div>
+          <div class="agent-row" id="ag-jira" onclick="activateAgent(event,'ag-jira',['stories','velocity'])">
+            <div class="agent-dot" style="background:var(--gold)"></div>
+            <div class="agent-label">Jira Writer Agent</div>
+            <div class="agent-output">→ Epics + stories</div>
+            <div class="dash-link">Stats ↗</div>
+          </div>
+          <div class="agent-row" id="ag-dep" onclick="activateAgent(event,'ag-dep',['w-burndown'])">
+            <div class="agent-dot" style="background:var(--gold)"></div>
+            <div class="agent-label">Dependency Mapper Agent</div>
+            <div class="agent-output">→ Blocking links</div>
+            <div class="dash-link">Burndown ↗</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <!-- LAYER 03 -->
+      <div class="layer-block" id="layer03" onclick="activateLayer('layer03', ['w-prs','w-defects','w-team'])">
+        <div class="layer-header">
+          <div class="layer-icon-wrap" style="background:rgba(52,211,153,0.06);">
+            <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg">
+              <rect x="12" y="12" width="76" height="48" rx="5" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="1.5"/>
+              <rect x="12" y="12" width="76" height="11" rx="5" fill="rgba(52,211,153,0.12)" stroke="none"/>
+              <rect x="12" y="19" width="76" height="4" rx="0" fill="rgba(52,211,153,0.12)" stroke="none"/>
+              <circle cx="21" cy="17" r="2.5" fill="#f87171"/>
+              <circle cx="29" cy="17" r="2.5" fill="#fbbf24"/>
+              <circle cx="37" cy="17" r="2.5" fill="#34d399"/>
+              <text x="22" y="34" text-anchor="start" fill="#34d399" font-size="7.5" font-family="monospace">def ingest(prd):</text>
+              <text x="22" y="42" text-anchor="start" fill="#34d399" font-size="7.5" font-family="monospace" opacity="0.7">  schema = parse(</text>
+              <text x="22" y="50" text-anchor="start" fill="#34d399" font-size="7.5" font-family="monospace" opacity="0.7">    prd.text)</text>
+              <text x="22" y="58" text-anchor="start" fill="#34d399" font-size="7.5" font-family="monospace" opacity="0.5">  return schema</text>
+              <line x1="96" y1="36" x2="110" y2="36" stroke="#34d399" stroke-width="2" stroke-linecap="round" marker-end="url(#arr03)"/>
+              <defs><marker id="arr03" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+              <rect x="113" y="14" width="72" height="20" rx="4" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1"/>
+              <text x="149" y="24" text-anchor="middle" fill="#34d399" font-size="7" font-family="monospace">feature/FF-142</text>
+              <text x="149" y="31" text-anchor="middle" fill="#34d399" font-size="6.5" font-family="monospace" opacity="0.6">+47 -12 lines</text>
+              <rect x="113" y="40" width="72" height="20" rx="4" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="1" opacity="0.7"/>
+              <text x="149" y="50" text-anchor="middle" fill="#34d399" font-size="7" font-family="monospace">PR #142 opened</text>
+              <text x="149" y="57" text-anchor="middle" fill="#34d399" font-size="6.5" font-family="monospace" opacity="0.6">Review requested</text>
+            </svg>
+          </div>
+          <div class="layer-header-text">
+            <div class="layer-num">03</div>
+            <div class="layer-name" style="color:var(--green)">Code Generation, PRs & Assignment</div>
+            <div class="layer-tag bg-green">Ticket → Code → PR</div>
+          </div>
+        </div>
+        <div class="layer-agents">
+          <div class="agent-row" id="ag-code" onclick="activateAgent(event,'ag-code',['w-prs'])">
+            <div class="agent-dot" style="background:var(--green)"></div>
+            <div class="agent-label">Code Generation Agent</div>
+            <div class="agent-output">→ Code + tests</div>
+            <div class="dash-link">PR Throughput ↗</div>
+          </div>
+          <div class="agent-row" id="ag-pr" onclick="activateAgent(event,'ag-pr',['w-prs'])">
+            <div class="agent-dot" style="background:var(--green)"></div>
+            <div class="agent-label">PR Creation Agent</div>
+            <div class="agent-output">→ GitHub PR</div>
+            <div class="dash-link">PR Throughput ↗</div>
+          </div>
+          <div class="agent-row" id="ag-defect" onclick="activateAgent(event,'ag-defect',['w-defects','pipeline'])">
+            <div class="agent-dot" style="background:var(--red)"></div>
+            <div class="agent-label">Defect Detection Agent</div>
+            <div class="agent-output">→ Bug ticket</div>
+            <div class="dash-link">Defects ↗</div>
+          </div>
+          <div class="agent-row" id="ag-assign" onclick="activateAgent(event,'ag-assign',['w-team'])">
+            <div class="agent-dot" style="background:var(--green)"></div>
+            <div class="agent-label">Assignment Agent</div>
+            <div class="agent-output">→ Dev assignment</div>
+            <div class="dash-link">Team Workload ↗</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <!-- LAYER 04 -->
+      <div class="layer-block" id="layer04" onclick="activateLayer('layer04', ['w-prs','pipeline'])">
+        <div class="layer-header">
+          <div class="layer-icon-wrap" style="background:rgba(248,113,113,0.06);">
+            <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg">
+              <rect x="12" y="10" width="80" height="52" rx="5" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+              <rect x="12" y="10" width="80" height="10" rx="5" fill="rgba(248,113,113,0.12)" stroke="none"/>
+              <rect x="12" y="16" width="80" height="4" rx="0" fill="rgba(248,113,113,0.12)" stroke="none"/>
+              <text x="52" y="19" text-anchor="middle" fill="#f87171" font-size="7" font-family="monospace">diff review</text>
+              <rect x="18" y="26" width="68" height="7" rx="2" fill="rgba(52,211,153,0.15)"/>
+              <text x="21" y="32" fill="#34d399" font-size="6.5" font-family="monospace">+ schema.align(target)</text>
+              <rect x="18" y="35" width="68" height="7" rx="2" fill="rgba(248,113,113,0.15)"/>
+              <text x="21" y="41" fill="#f87171" font-size="6.5" font-family="monospace">- schema.map(legacy)</text>
+              <rect x="18" y="44" width="68" height="7" rx="2" fill="rgba(248,113,113,0.15)"/>
+              <text x="21" y="50" fill="#f87171" font-size="6.5" font-family="monospace">- validate(null)</text>
+              <rect x="18" y="53" width="68" height="7" rx="2" fill="rgba(251,191,36,0.1)"/>
+              <text x="21" y="59" fill="#fbbf24" font-size="6.5" font-family="monospace">⚠ unhandled edge case</text>
+              <line x1="100" y1="36" x2="114" y2="36" stroke="#f87171" stroke-width="2" stroke-linecap="round" marker-end="url(#arr04)"/>
+              <defs><marker id="arr04" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+              <rect x="117" y="20" width="68" height="32" rx="5" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+              <text x="151" y="34" text-anchor="middle" fill="#f87171" font-size="8" font-weight="bold" font-family="monospace">GATE</text>
+              <text x="151" y="44" text-anchor="middle" fill="#34d399" font-size="7" font-family="monospace">✓ Ready</text>
+            </svg>
+          </div>
+          <div class="layer-header-text">
+            <div class="layer-num">04</div>
+            <div class="layer-name" style="color:var(--red)">Automated PR Diff Review</div>
+            <div class="layer-tag bg-red">Diff → Review → Gate</div>
+          </div>
+        </div>
+        <div class="layer-agents">
+          <div class="agent-row" id="ag-diff" onclick="activateAgent(event,'ag-diff',['w-prs'])">
+            <div class="agent-dot" style="background:var(--red)"></div>
+            <div class="agent-label">Diff Analyzer Agent</div>
+            <div class="agent-output">→ Diff JSON</div>
+            <div class="dash-link">PRs ↗</div>
+          </div>
+          <div class="agent-row" id="ag-review" onclick="activateAgent(event,'ag-review',['w-prs','pipeline'])">
+            <div class="agent-dot" style="background:var(--red)"></div>
+            <div class="agent-label">Code Review Agent</div>
+            <div class="agent-output">→ Inline comments</div>
+            <div class="dash-link">PRs + Pipeline ↗</div>
+          </div>
+          <div class="agent-row" id="ag-gate" onclick="activateAgent(event,'ag-gate',['pipeline','w-prs'])">
+            <div class="agent-dot" style="background:var(--red)"></div>
+            <div class="agent-label">Approval Gate Agent</div>
+            <div class="agent-output">→ Ready / Needs Work</div>
+            <div class="dash-link">Pipeline ↗</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <!-- LAYER 05 -->
+      <div class="layer-block" id="layer05" onclick="activateLayer('layer05', ['w-voice','w-escalation','w-velocity'])">
+        <div class="layer-header">
+          <div class="layer-icon-wrap" style="background:rgba(167,139,250,0.06);">
+            <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="10" width="86" height="52" rx="5" fill="rgba(167,139,250,0.06)" stroke="#a78bfa" stroke-width="1.5"/>
+              <rect x="18" y="18" width="22" height="14" rx="3" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" stroke-width="0.8"/>
+              <text x="29" y="27" text-anchor="middle" fill="#a78bfa" font-size="7.5" font-weight="bold" font-family="monospace">94%</text>
+              <rect x="46" y="18" width="22" height="14" rx="3" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="0.8"/>
+              <text x="57" y="27" text-anchor="middle" fill="#34d399" font-size="7.5" font-weight="bold" font-family="monospace">18pt</text>
+              <rect x="74" y="18" width="15" height="14" rx="3" fill="rgba(248,113,113,0.15)" stroke="#f87171" stroke-width="0.8"/>
+              <text x="81" y="27" text-anchor="middle" fill="#f87171" font-size="7.5" font-weight="bold" font-family="monospace">3</text>
+              <line x1="18" y1="40" x2="88" y2="40" stroke="#a78bfa" stroke-width="0.5" opacity="0.3"/>
+              <polyline points="18,54 30,48 42,52 54,44 66,46 78,40 88,42" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="78" cy="40" r="2.5" fill="#a78bfa"/>
+              <line x1="104" y1="36" x2="118" y2="36" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" marker-end="url(#arr05)"/>
+              <defs><marker id="arr05" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+              <rect x="121" y="16" width="68" height="40" rx="5" fill="rgba(167,139,250,0.06)" stroke="#a78bfa" stroke-width="1.5"/>
+              <circle cx="155" cy="30" r="8" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" stroke-width="1"/>
+              <rect x="151" y="27" width="3" height="7" rx="1.5" fill="#a78bfa"/>
+              <rect x="156" y="27" width="3" height="7" rx="1.5" fill="#a78bfa"/>
+              <path d="M147 33 Q147 40 155 40 Q163 40 163 33" fill="none" stroke="#a78bfa" stroke-width="1" stroke-linecap="round"/>
+              <line x1="155" y1="40" x2="155" y2="44" stroke="#a78bfa" stroke-width="1"/>
+              <line x1="148" y1="44" x2="162" y2="44" stroke="#a78bfa" stroke-width="1" stroke-linecap="round"/>
+              <text x="155" y="52" text-anchor="middle" fill="#a78bfa" font-size="6.5" font-family="monospace">10 min brief</text>
+            </svg>
+          </div>
+          <div class="layer-header-text">
+            <div class="layer-num">05</div>
+            <div class="layer-name" style="color:var(--purple)">Executive Voice Dashboard & Q&A</div>
+            <div class="layer-tag bg-purple">Metrics → Voice → Route</div>
+          </div>
+        </div>
+        <div class="layer-agents">
+          <div class="agent-row" id="ag-summary" onclick="activateAgent(event,'ag-summary',['w-velocity','w-burndown'])">
+            <div class="agent-dot" style="background:var(--purple)"></div>
+            <div class="agent-label">Summary Aggregation Agent</div>
+            <div class="agent-output">→ Weekly metrics</div>
+            <div class="dash-link">Velocity ↗</div>
+          </div>
+          <div class="agent-row" id="ag-dash" onclick="activateAgent(event,'ag-dash',['w-velocity','w-burndown','w-defects','w-prs'])">
+            <div class="agent-dot" style="background:var(--purple)"></div>
+            <div class="agent-label">Dashboard Rendering Agent</div>
+            <div class="agent-output">→ HTML dashboard</div>
+            <div class="dash-link">All widgets ↗</div>
+          </div>
+          <div class="agent-row" id="ag-voice" onclick="activateAgent(event,'ag-voice',['w-voice'])">
+            <div class="agent-dot" style="background:var(--purple)"></div>
+            <div class="agent-label">Voice Briefing Agent</div>
+            <div class="agent-output">→ 10-min MP3</div>
+            <div class="dash-link">Voice widget ↗</div>
+          </div>
+          <div class="agent-row" id="ag-qa" onclick="activateAgent(event,'ag-qa',['w-escalation'])">
+            <div class="agent-dot" style="background:var(--n8n2)"></div>
+            <div class="agent-label">Q&A Routing Agent <span style="font-size:9px;color:var(--n8n2)">(n8n)</span></div>
+            <div class="agent-output">→ Slack + email</div>
+            <div class="dash-link">Escalation ↗</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+      <div style="text-align:center; padding: 10px 0 4px; border-top: 1px solid rgba(255,255,255,0.06); margin-top:4px;">
+        <a href="https://github.com/toyoaladesuru/flowforge-ai" target="_blank" style="font-family:var(--mono);font-size:10px;color:var(--text3);text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--text3)'">github.com/toyoaladesuru/flowforge-ai</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RIGHT: DASHBOARD ══ -->
+  <div class="dash-panel" id="dashPanel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Executive Dashboard</div>
+        <div class="panel-sub" id="dash-panel-sub">NovaMart Platform Migration · Sprint 14 · Generated by FlowForge AI agents</div>
+      </div>
+      <div style="font-size:10px; font-family:var(--mono); color:var(--text2)">Fri Mar 14, 2026 · 5:00 PM</div>
+    </div>
+    <div class="dash-scroll">
+
+      <!-- PROJECT PORTFOLIO -->
+      <div class="portfolio-bar">
+        <div class="portfolio-bar-header">
+          <div class="portfolio-bar-title">Project Portfolio</div>
+          <div class="portfolio-count">4 active projects</div>
+        </div>
+        <div class="project-cards-row">
+
+          <!-- P1: NovaMart — ACTIVE/ZOOMED -->
+          <div class="proj-card active" id="proj-novamart" style="--pc:#22d3ee" onclick="switchProject('novamart')">
+            <div class="zoomed-label">● viewing</div>
+            <div class="proj-name">NovaMart Migration</div>
+            <div class="proj-meta">Sprint 14 · Data</div>
+            <div class="proj-stats">
+              <span class="proj-stat" style="color:var(--green)">18/21pt</span>
+              <span class="proj-stat" style="color:var(--gold)">3 defects</span>
+            </div>
+          </div>
+
+          <!-- P2: RetailEdge -->
+          <div class="proj-card" id="proj-retailedge" style="--pc:#a78bfa" onclick="switchProject('retailedge')">
+            <div class="proj-name">RetailEdge API v2</div>
+            <div class="proj-meta">Sprint 11 · Backend</div>
+            <div class="proj-stats">
+              <span class="proj-stat" style="color:var(--green)">22/24pt</span>
+              <span class="proj-stat" style="color:var(--green)">0 defects</span>
+            </div>
+          </div>
+
+          <!-- P3: CloudVault -->
+          <div class="proj-card" id="proj-cloudvault" style="--pc:#f87171" onclick="switchProject('cloudvault')">
+            <div class="proj-name">CloudVault Infra</div>
+            <div class="proj-meta">Sprint 6 · DevOps</div>
+            <div class="proj-stats">
+              <span class="proj-stat" style="color:var(--gold)">11/18pt</span>
+              <span class="proj-stat" style="color:var(--red)">5 defects</span>
+            </div>
+          </div>
+
+          <!-- P4: Synapse ML -->
+          <div class="proj-card" id="proj-synapse" style="--pc:#34d399" onclick="switchProject('synapse')">
+            <div class="proj-name">Synapse ML Pipeline</div>
+            <div class="proj-meta">Sprint 3 · AI/ML</div>
+            <div class="proj-stats">
+              <span class="proj-stat" style="color:var(--cyan)">9/12pt</span>
+              <span class="proj-stat" style="color:var(--green)">1 defect</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- STAT ROW -->
+      <div class="stat-mini-row">
+        <div class="stat-mini" id="velocity" data-label="Sprint Orchestrator" onclick="openModal('Sprint Velocity','Sprint 14 · 18/21 pts delivered','PM — Casey Patel')">
+          <div class="stat-mini-label">Velocity</div>
+          <div class="stat-mini-val" style="color:var(--green)">18<span style="font-size:12px;color:var(--text2)">/21</span></div>
+          <div class="stat-mini-delta" style="color:var(--green)">↑ 12% vs S13</div>
+        </div>
+        <div class="stat-mini" id="stories" data-label="Jira Writer Agent" onclick="openModal('Stories Completed','8/9 stories closed · 1 to S15','PM — Casey Patel')">
+          <div class="stat-mini-label">Stories</div>
+          <div class="stat-mini-val" style="color:var(--cyan)">8<span style="font-size:12px;color:var(--text2)">/9</span></div>
+          <div class="stat-mini-delta">1 carried fwd</div>
+        </div>
+        <div class="stat-mini" id="pipeline" data-label="Approval Gate Agent" onclick="openModal('Pipeline Health','94% pass rate · 2 flaky tests','Tech Lead — Taylor K.')">
+          <div class="stat-mini-label">Pipeline</div>
+          <div class="stat-mini-val" style="color:var(--green)">94<span style="font-size:13px">%</span></div>
+          <div class="stat-mini-delta" style="color:var(--green)">↑ 6% vs S13</div>
+        </div>
+        <div class="stat-mini" id="open-def" data-label="Defect Detection Agent" onclick="openModal('Open Defects','3 open · 1 P1 escalated · 2 P3','Assignee — Alex R.')">
+          <div class="stat-mini-label">Defects</div>
+          <div class="stat-mini-val" style="color:var(--gold)">3</div>
+          <div class="stat-mini-delta" style="color:var(--red)">⚠ 1 P1 active</div>
+        </div>
+      </div>
+
+      <!-- BURNDOWN + VELOCITY CHARTS -->
+      <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:8px; margin-bottom:10px;">
+        <div class="widget" id="w-burndown" data-label="Sprint Orchestrator Agent" onclick="openModal('Sprint Burndown','On track · 3pts remaining EOD Fri','PM — Casey Patel')">
+          <div class="widget-header">
+            <div class="widget-title">Sprint Burndown</div>
+            <div class="wbadge bg-green">On Track</div>
+          </div>
+          <canvas id="bdChart" height="110"></canvas>
+        </div>
+        <div class="widget" id="w-velocity" data-label="Summary Aggregation Agent" onclick="openModal('Velocity Trend','Improving 3 sprints in a row','PM — Casey Patel')">
+          <div class="widget-header">
+            <div class="widget-title">Velocity Trend</div>
+            <div class="wbadge bg-cyan">↑ Trending</div>
+          </div>
+          <canvas id="velChart" height="110"></canvas>
+        </div>
+      </div>
+
+      <!-- TEAM + DEFECTS + PRs -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+
+        <!-- TEAM WORKLOAD -->
+        <div class="widget" id="w-team" data-label="Assignment Agent" onclick="openModal('Team Workload','Sprint 14 · all 5 members active','PM — Casey Patel')">
+          <div class="widget-header">
+            <div class="widget-title">Team Workload</div>
+            <div class="wbadge bg-cyan">5 active</div>
+          </div>
+          <div class="team-mini" id="teamList"></div>
+        </div>
+
+        <!-- DEFECT HEATMAP -->
+        <div class="widget" id="w-defects" data-label="Defect Detection Agent" onclick="openModal('Defect Heatmap','P1 spike Mar 5 · schema mismatch','Assignee — Alex R.')">
+          <div class="widget-header">
+            <div class="widget-title">Defect Heatmap</div>
+            <div class="wbadge bg-red">1 P1 Active</div>
+          </div>
+          <div class="heat-days">
+            <div class="heat-day">M</div><div class="heat-day">T</div><div class="heat-day">W</div>
+            <div class="heat-day">T</div><div class="heat-day">F</div><div class="heat-day">S</div><div class="heat-day">S</div>
+          </div>
+          <div class="heat-grid" id="heatGrid"></div>
+        </div>
+
+        <!-- PR THROUGHPUT -->
+        <div class="widget" id="w-prs" data-label="PR Creation Agent" onclick="openModal('PR Throughput','11 merged · avg review 47 min','Tech Lead — Taylor K.')">
+          <div class="widget-header">
+            <div class="widget-title">PR Throughput</div>
+            <div class="wbadge bg-green">11 merged</div>
+          </div>
+          <div class="pr-mini" id="prList"></div>
+        </div>
+      </div>
+
+      <!-- FRD + ERD STATUS ROW -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        <div class="widget" id="w-frd" data-label="FRD Generation Agent" onclick="openModal('FRD Status','Sprint 14 FRD approved · 9 FRs generated','PM — Casey Patel')">
+          <div class="widget-header">
+            <div class="widget-title">FRD Status</div>
+            <div class="wbadge bg-green">Approved</div>
+          </div>
+          <div style="font-size:11px; color:var(--text2); line-height:1.7;">
+            <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>Functional Requirements</span><span style="color:var(--green);font-family:var(--mono)">9 / 9</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>Acceptance Criteria</span><span style="color:var(--green);font-family:var(--mono)">27 / 27</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>Out of Scope items</span><span style="color:var(--text2);font-family:var(--mono)">4 flagged</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Approved by</span><span style="color:var(--cyan);font-family:var(--mono)">Casey Patel · PM</span></div>
+          </div>
+        </div>
+        <div class="widget" id="w-erd" data-label="ERD Synthesis Agent" onclick="openModal('ERD Status','v3 approved · 8 entities · 14 relationships','Tech Lead — Taylor K.')">
+          <div class="widget-header">
+            <div class="widget-title">ERD Status</div>
+            <div class="wbadge bg-cyan">v3 Approved</div>
+          </div>
+          <div style="font-size:11px; color:var(--text2); line-height:1.7;">
+            <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>Entities modeled</span><span style="color:var(--cyan);font-family:var(--mono)">8</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>Relationships defined</span><span style="color:var(--cyan);font-family:var(--mono)">14</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>Format</span><span style="color:var(--text2);font-family:var(--mono)">Mermaid.js</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Approved by</span><span style="color:var(--cyan);font-family:var(--mono)">Taylor K. · Tech Lead</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VOICE AGENT -->
+      <div class="voice-widget" id="w-voice" data-label="Voice Briefing Agent">
+        <div class="widget-header">
+          <div class="widget-title">Voice Agent Briefing</div>
+          <div style="display:flex;gap:6px;">
+            <div class="wbadge bg-orange">n8n SCHEDULED</div>
+            <div class="wbadge bg-purple">AI NARRATED</div>
+          </div>
+        </div>
+        <div class="voice-script-mini">
+          <span class="speak-ind"><span class="sb"></span><span class="sb"></span><span class="sb"></span><span class="sb"></span><span class="sb"></span></span>
+          <span class="hl">Good afternoon.</span> This is your FlowForge AI Sprint 14 briefing for <span class="cn">NovaMart Platform Migration</span>, generated Friday Mar 14 at 5 PM via n8n cron trigger.<br><br>
+          The team <span class="gn">completed 8 of 9 stories</span>, delivering <span class="hl">18 story points</span> — our strongest velocity in 4 sprints. The Order History dataset is fully validated end-to-end. One <span class="rd">P1 escalation</span> was resolved with <span class="gd">VP Engineering approval</span> for a 2-day extension. Pipeline health is back at <span class="gn">94%</span>.
+        </div>
+        <div class="wave-row">
+          <button class="play-b" id="playBtn" onclick="togglePlay()">
+            <svg viewBox="0 0 16 16"><path d="M3 2l11 6-11 6z"/></svg>
+          </button>
+          <div class="wf-mini" id="wfMini"></div>
+          <div class="vtime" id="vTime">0:00 / 10:00</div>
+        </div>
+      </div>
+
+      <!-- ESCALATION -->
+      <div class="widget" id="w-escalation" data-label="Q&A Routing Agent (n8n)">
+        <div class="widget-header">
+          <div class="widget-title" style="color:var(--red)">Escalations & Approvals</div>
+          <div style="display:flex;gap:6px;">
+            <div class="wbadge bg-orange">n8n ROUTED</div>
+            <div class="wbadge bg-red">1 Active</div>
+          </div>
+        </div>
+        <div class="esc-item">
+          <div class="esc-head">
+            <div class="esc-title">P1 — Staging Schema Mismatch · FF-DEF-089</div>
+            <div class="status-p s-app">APPROVED</div>
+          </div>
+          <div class="esc-body">
+            Legacy table <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:10px;font-family:var(--mono)">legacy_orders_raw</code> renamed without propagating to Staging transformation logic. Caused 0-row output in <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:10px;font-family:var(--mono)">novamart_prod.order_summary</code> for order records 2021–2024. <span style="color:var(--gold)">VP Engineering approved 2-day validation extension.</span> n8n routed approval notification to all stakeholders via Slack.
+          </div>
+          <div class="chain">
+            <div class="chain-node"><div class="chain-dot" style="background:var(--red)"></div>Alex R. <span style="color:var(--text3)">(raised)</span></div>
+            <div class="chain-arr">→</div>
+            <div class="chain-node"><div class="chain-dot" style="background:var(--gold)"></div>Taylor K.</div>
+            <div class="chain-arr">→</div>
+            <div class="chain-node"><div class="chain-dot" style="background:var(--green)"></div>Casey P.</div>
+            <div class="chain-arr">→</div>
+            <div class="chain-node"><div class="chain-dot" style="background:var(--cyan)"></div>VP Eng ✓</div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:10px;">
+          <button class="btn-s" onclick="openModal('Escalation Q&A','Click any metric on this dashboard to ask the team','PM — Casey Patel')" style="font-size:11px; padding:6px 14px;">
+            Ask the team about this →
+          </button>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeOutside(event)">
+  <div class="modal-box" id="modalBox">
+    <div id="modalInner">
+      <div class="modal-top">
+        <div class="modal-h" id="mTitle">Ask about this</div>
+        <button class="x-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-ctx"><span id="mMetric">metric</span> · <span id="mDetail">detail</span></div>
+      <div class="modal-lbl">Your question for the team:</div>
+      <textarea class="modal-ta" id="mTextarea" placeholder="e.g. Can you walk me through what happened here?"></textarea>
+      <div class="modal-route">Route to: <div class="route-chip" id="mRoute">PM</div> <span style="color:var(--text3)">via Slack + email · SLA 24 hrs</span></div>
+      <div class="modal-btns">
+        <button class="btn-c" onclick="closeModal()">Cancel</button>
+        <button class="btn-s" onclick="sendQ()">Send Question →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="arch-tooltip" id="tooltip"></div>
+
+<script>
+// ── CHARTS ──────────────────────────────────────────────────────
+Chart.defaults.color = '#7b8fa8';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+Chart.defaults.font.size = 10;
+
+const bdCtx = document.getElementById('bdChart').getContext('2d');
+new Chart(bdCtx, {
+  type: 'line',
+  data: {
+    labels: ['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10'],
+    datasets: [
+      { label:'Ideal', data:[21,18.9,16.8,14.7,12.6,10.5,8.4,6.3,4.2,0], borderColor:'rgba(123,143,168,0.3)', borderDash:[4,3], borderWidth:1, pointRadius:0, fill:false, tension:0 },
+      { label:'Actual', data:[21,19,17,15,13,11,8,6,3,null], borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,0.05)', borderWidth:1.5, pointRadius:2.5, pointBackgroundColor:'#22d3ee', fill:true, tension:0.3 }
+    ]
+  },
+  options: {
+    responsive:true, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#121824', borderColor:'rgba(255,255,255,0.08)', borderWidth:1}},
+    scales:{ x:{grid:{color:'rgba(255,255,255,0.03)'}}, y:{grid:{color:'rgba(255,255,255,0.03)'}, min:0, max:24} }
+  }
+});
+
+const velCtx = document.getElementById('velChart').getContext('2d');
+new Chart(velCtx, {
+  type:'bar',
+  data:{
+    labels:['S11','S12','S13','S14'],
+    datasets:[
+      {label:'Committed', data:[20,21,19,21], backgroundColor:'rgba(255,255,255,0.05)', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, borderRadius:3},
+      {label:'Delivered', data:[14,16,16,18], backgroundColor:['rgba(34,211,238,0.4)','rgba(34,211,238,0.5)','rgba(34,211,238,0.65)','rgba(34,211,238,0.85)'], borderRadius:3}
+    ]
+  },
+  options:{
+    responsive:true, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#121824', borderColor:'rgba(255,255,255,0.08)', borderWidth:1}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.03)'}, min:0, max:24} }
+  }
+});
+
+// ── TEAM ────────────────────────────────────────────────────────
+const team=[
+  {n:'Alex Rivera',t:'Staging schema fix (FF-DEF-089)',pts:5,load:72,c:'#f87171',i:'AR'},
+  {n:'Taylor Kim',t:'Prod layer validation — Orders',pts:6,load:88,c:'#a78bfa',i:'TK'},
+  {n:'Jordan Blake',t:'Legacy ingestion — Inventory',pts:4,load:58,c:'#22d3ee',i:'JB'},
+  {n:'Morgan Chen',t:'ERD update — Customer tables',pts:3,load:44,c:'#34d399',i:'MC'},
+  {n:'Casey Patel',t:'Sprint 15 backlog grooming',pts:2,load:30,c:'#fbbf24',i:'CP'},
+];
+const tl=document.getElementById('teamList');
+team.forEach(m=>{
+  tl.innerHTML+=`<div class="tmember">
+    <div class="tav" style="background:${m.c}22;color:${m.c}">${m.i}</div>
+    <div class="tinfo">
+      <div class="tname">${m.n}</div>
+      <div class="ttask">${m.t}</div>
+      <div class="tbar-wrap"><div class="tbar" style="width:${m.load}%;background:${m.c}"></div></div>
+    </div>
+    <div class="tpts">${m.pts}pt</div>
+  </div>`;
+});
+
+// ── HEATMAP ──────────────────────────────────────────────────────
+const heat=[0,0,1,0,0,0,0,0,1,2,1,0,0,0,1,1,3,2,1,0,0,0,2,4,1,0,0,0,0,1,1,1,1,0,0];
+const hc=['transparent','rgba(251,191,36,0.2)','rgba(251,191,36,0.5)','rgba(248,113,113,0.5)','rgba(248,113,113,0.85)'];
+const hg=document.getElementById('heatGrid');
+heat.forEach((v,i)=>{
+  const c=document.createElement('div');
+  c.className='heat-cell';
+  c.style.background=hc[v]||'rgba(255,255,255,0.03)';
+  c.style.border=v>0?'1px solid rgba(255,255,255,0.07)':'1px solid rgba(255,255,255,0.02)';
+  hg.appendChild(c);
+});
+
+// ── PRS ──────────────────────────────────────────────────────────
+const prs=[
+  {t:'feat: Staging schema alignment fix',c:'#34d399',id:'FF-142',who:'Taylor K.'},
+  {t:'feat: Order History legacy ingestion v2',c:'#34d399',id:'FF-138',who:'Jordan B.'},
+  {t:'fix: null handling in JSON parser',c:'#34d399',id:'FF-135',who:'Alex R.'},
+  {t:'feat: Prod layer promotion pipeline',c:'#34d399',id:'FF-140',who:'Taylor K.'},
+  {t:'chore: Inventory table mapping update',c:'#fbbf24',id:'FF-145',who:'Pending'},
+  {t:'feat: Customer dataset legacy ingestion',c:'#a78bfa',id:'FF-147',who:'Unassigned'},
+];
+const pl=document.getElementById('prList');
+prs.forEach(p=>{
+  pl.innerHTML+=`<div class="pr-item">
+    <div class="pr-dot" style="background:${p.c}"></div>
+    <div class="pr-text">${p.t}</div>
+    <div class="pr-id">${p.id}</div>
+    <div class="pr-who">${p.who}</div>
+  </div>`;
+});
+
+// ── WAVEFORM ──────────────────────────────────────────────────────
+const wf=document.getElementById('wfMini');
+const hs=[5,8,12,9,16,11,7,15,10,19,13,8,16,12,6,18,14,9,21,15,10,17,7,13,19,11,16,8,18,13,9,17,11,6,19,14,10,17,12,7,20,15,8];
+hs.forEach(h=>{
+  const b=document.createElement('div');
+  b.className='wbar'; b.style.height=h+'px'; wf.appendChild(b);
+});
+let playing=false,prog=0,wTimer=null;
+function togglePlay(){
+  playing=!playing;
+  const btn=document.getElementById('playBtn');
+  if(playing){
+    btn.innerHTML='<svg viewBox="0 0 16 16" style="margin-left:0"><rect x="3" y="2" width="4" height="12" rx="1" fill="var(--bg)"/><rect x="9" y="2" width="4" height="12" rx="1" fill="var(--bg)"/></svg>';
+    wTimer=setInterval(()=>{
+      prog=Math.min(prog+1/600,1);
+      const bars=document.querySelectorAll('.wbar');
+      const pc=Math.floor(prog*bars.length);
+      bars.forEach((b,i)=>{ b.classList.remove('wp','wa'); if(i===pc)b.classList.add('wa'); else if(i<pc)b.classList.add('wp'); });
+      const s=Math.round(prog*600),m=Math.floor(s/60),sc=s%60;
+      document.getElementById('vTime').textContent=`${m}:${sc.toString().padStart(2,'0')} / 10:00`;
+      if(prog>=1){playing=false;btn.innerHTML='<svg viewBox="0 0 16 16"><path d="M3 2l11 6-11 6z" fill="var(--bg)"/></svg>';clearInterval(wTimer);prog=0;}
+    },100);
+  } else {
+    clearInterval(wTimer);
+    btn.innerHTML='<svg viewBox="0 0 16 16"><path d="M3 2l11 6-11 6z" fill="var(--bg)"/></svg>';
+  }
+}
+
+// ── PROJECT SWITCHER ──────────────────────────────────────────
+const projects = {
+  novamart: {
+    name: 'NovaMart Platform Migration',
+    sub: 'NovaMart Platform Migration · Sprint 14 · Generated by FlowForge AI agents',
+    arch: 'NovaMart Platform Migration',
+    color: '#22d3ee'
+  },
+  retailedge: {
+    name: 'RetailEdge API v2',
+    sub: 'RetailEdge API v2 · Sprint 11 · Backend modernization',
+    arch: 'RetailEdge API v2',
+    color: '#a78bfa'
+  },
+  cloudvault: {
+    name: 'CloudVault Infra',
+    sub: 'CloudVault Infrastructure · Sprint 6 · DevOps automation',
+    arch: 'CloudVault Infrastructure',
+    color: '#f87171'
+  },
+  synapse: {
+    name: 'Synapse ML Pipeline',
+    sub: 'Synapse ML Pipeline · Sprint 3 · AI/ML feature delivery',
+    arch: 'Synapse ML Pipeline',
+    color: '#34d399'
+  }
+};
+
+let activeProject = 'novamart';
+
+function switchProject(id) {
+  if (id === activeProject) return;
+  activeProject = id;
+  const p = projects[id];
+
+  // Update all project cards
+  document.querySelectorAll('.proj-card').forEach(c => {
+    c.classList.remove('active');
+    const zl = c.querySelector('.zoomed-label');
+    if (zl) zl.remove();
+  });
+  const activeCard = document.getElementById('proj-' + id);
+  activeCard.classList.add('active');
+  const zl = document.createElement('div');
+  zl.className = 'zoomed-label';
+  zl.textContent = '● viewing';
+  activeCard.prepend(zl);
+
+  // Update dashboard sub header
+  document.getElementById('dash-panel-sub').textContent = p.sub;
+
+  // Update arch label
+  const archLabel = document.getElementById('arch-project-label');
+  if (archLabel) {
+    archLabel.textContent = p.arch;
+    archLabel.style.color = p.color;
+  }
+
+  // Update project chip in topbar
+  const chip = document.querySelector('.project-chip');
+  if (chip) chip.textContent = p.name;
+
+  // Flash the main dashboard area to signal switch
+  const scroll = document.querySelector('.dash-scroll');
+  scroll.style.opacity = '0.4';
+  scroll.style.transition = 'opacity 0.15s';
+  setTimeout(() => {
+    scroll.style.opacity = '1';
+  }, 180);
+
+  // Clear any active highlights
+  clearHighlights();
+}
+let activeWidgets=[];
+function clearHighlights(){
+  document.querySelectorAll('.layer-block,.n8n-hub').forEach(el=>el.classList.remove('highlighted'));
+  document.querySelectorAll('.agent-row').forEach(el=>el.classList.remove('active-agent'));
+  document.querySelectorAll('.widget,.voice-widget,.stat-mini').forEach(el=>el.classList.remove('highlighted','n8n-highlight'));
+  activeWidgets=[];
+}
+
+function activateLayer(layerId, widgetIds){
+  clearHighlights();
+  document.getElementById(layerId).classList.add('highlighted');
+  widgetIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.classList.add('highlighted');
+      el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+  activeWidgets=widgetIds;
+}
+
+function activateAgent(e, agentId, widgetIds){
+  e.stopPropagation();
+  clearHighlights();
+  document.getElementById(agentId).classList.add('active-agent');
+  widgetIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.classList.add('highlighted');
+      setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+    }
+  });
+  activeWidgets=widgetIds;
+}
+
+function highlightN8n(){
+  clearHighlights();
+  document.getElementById('n8nHub').classList.add('highlighted');
+  ['w-voice','w-escalation'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.classList.add('n8n-highlight'); el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  });
+}
+
+// ── VIEW SWITCHER ──────────────────────────────────────────────────
+function setView(v){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  const split=document.getElementById('mainSplit');
+  const arch=document.getElementById('archPanel');
+  const dash=document.getElementById('dashPanel');
+  if(v==='split'){ split.style.gridTemplateColumns='1fr 1fr'; arch.style.display='flex'; dash.style.display='flex'; }
+  else if(v==='arch'){ split.style.gridTemplateColumns='1fr'; arch.style.display='flex'; dash.style.display='none'; }
+  else { split.style.gridTemplateColumns='1fr'; arch.style.display='none'; dash.style.display='flex'; }
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────
+function openModal(title,detail,route){
+  document.getElementById('mTitle').textContent='Ask about: '+title;
+  document.getElementById('mMetric').textContent=title;
+  document.getElementById('mDetail').textContent=detail;
+  document.getElementById('mRoute').textContent=route;
+  document.getElementById('mTextarea').value='';
+  document.getElementById('modalInner').innerHTML=`
+    <div class="modal-top"><div class="modal-h">Ask about: ${title}</div><button class="x-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-ctx"><span>${title}</span> · ${detail}</div>
+    <div class="modal-lbl">Your question for the team:</div>
+    <textarea class="modal-ta" id="mTextarea" placeholder="e.g. Can you walk me through this?"></textarea>
+    <div class="modal-route">Route to: <div class="route-chip">${route}</div> <span style="color:var(--text3)">via Slack + email · SLA 24 hrs</span></div>
+    <div class="modal-btns"><button class="btn-c" onclick="closeModal()">Cancel</button><button class="btn-s" onclick="sendQ()">Send →</button></div>`;
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); }
+function closeOutside(e){ if(e.target===document.getElementById('modalBg'))closeModal(); }
+function sendQ(){
+  document.getElementById('modalInner').innerHTML=`
+    <div class="sent-c">
+      <div class="sent-icon">✓</div>
+      <div class="sent-title">Question Routed</div>
+      <div class="sent-sub" style="margin-bottom:5px">Delivered via Slack + email via n8n Q&A Routing Agent.</div>
+      <div class="sent-sub">Expected response: <strong style="color:var(--cyan)">within 24 hrs</strong></div>
+      <div style="margin-top:16px"><button class="btn-s" onclick="closeModal()">Done</button></div>
+    </div>`;
+}
+</script>
+</body>
+</html>
